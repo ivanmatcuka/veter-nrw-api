@@ -1,0 +1,13 @@
+{
+    "name": "ivan/veter-nrw-api",
+    "type": "project",
+    "require": {
+        "wenprise/wordpress-settings-api": "^1.3"
+    },
+    "authors": [
+        {
+            "name": "Ivan Matcuka",
+            "email": "ivanmatcuka@gmail.com"
+        }
+    ]
+}
