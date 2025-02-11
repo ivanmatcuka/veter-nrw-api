@@ -1,5 +1,17 @@
 <?php
 
+/**
+ * @package NRW
+ * @version 1.0.0
+ */
+/*
+Plugin Name: Veter NRW Plugin
+Plugin URI: http://wordpress.org/plugins/hello-dolly/
+Description: This is not just a plugin, it symbolizes the hope and enthusiasm of an entire generation summed up in two words sung most famously by Louis Armstrong: Hello, Dolly. When activated you will randomly see a lyric from <cite>Hello, Dolly</cite> in the upper right of your admin screen on every page.
+Author: Ivan Matcuka
+Version: 1.0.0
+Author URI: https://github.com/ivanmatcuka
+*/
 
 if (!defined("ABSPATH")) {
   exit;
@@ -114,7 +126,7 @@ class VeterNRWPlugin
   }
 
   // Render our plugin's option page.
-  private function render_admin_page()
+  public function render_admin_page()
   {
 ?>
     <div class="wrap options-general-php">
@@ -130,7 +142,7 @@ class VeterNRWPlugin
 <?php
   }
 
-  private function render_field($field, $key)
+  public function render_field($field, $key)
   {
     $value = get_option($key, $field['value']);
 
@@ -157,7 +169,7 @@ class VeterNRWPlugin
     }
   }
 
-  private function add_field($field, $key, $section)
+  public function add_field($field, $key, $section)
   {
     $renderer = function () use ($field, $key) {
       $this->render_field($field, $key);
@@ -172,7 +184,7 @@ class VeterNRWPlugin
     );
   }
 
-  private function add_fields($fields, $section)
+  public function add_fields($fields, $section)
   {
     foreach ($fields as $key => $field) {
       register_setting('veter-plugin-settings', $key);

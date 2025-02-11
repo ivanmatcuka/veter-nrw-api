@@ -17,5 +17,5 @@ services:
     ports:
       - 8080:80
     volumes:
-      - ./wp-content/plugins:/var/www/html/wp-content/plugins
+      - .:/var/www/html/wp-content/plugins
     restart: always
