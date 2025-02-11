@@ -13,9 +13,16 @@ Version: 1.0.0
 Author URI: https://github.com/ivanmatcuka
 */
 
-if (!defined("ABSPATH")) {
-  exit;
-}
+namespace VeterNRWPlugin;
+
+use Twig\Loader\FilesystemLoader;
+use Twig\Environment;
+use buzzingpixel\twigswitch\SwitchTwigExtension;
+
+defined('ABSPATH') or die();
+
+require(__DIR__ . '/vendor/autoload.php');
+
 
 class VeterNRWPlugin
 {
@@ -104,6 +111,17 @@ class VeterNRWPlugin
     ]
   ];
 
+  protected Environment $twig;
+
+  public function __construct()
+  {
+    $this->twig = new Environment(new FilesystemLoader(__DIR__ . '/templates'), [
+      'cache' => false,
+      'strict_variables' => true,
+    ]);
+    $this->twig->addExtension(new SwitchTwigExtension());
+  }
+
   // Add our WP admin hooks.
   public function load()
   {
@@ -128,44 +146,24 @@ class VeterNRWPlugin
   // Render our plugin's option page.
   public function render_admin_page()
   {
-?>
-    <div class="wrap options-general-php">
-      <h1>Veter NRW Plugin Settings</h1>
-      <form method="post" action="options.php">
-        <?php
-        settings_fields('veter-plugin-settings');
-        do_settings_sections('veter-plugin-settings');
-        submit_button();
-        ?>
-      </form>
-    </div>
-<?php
+    return $this->twig->render('settings_form.twig', [
+      'fields' => settings_fields("veter-plugin-settings"),
+      'sections' => do_settings_sections('veter-plugin-settings'),
+      'submit_button' => submit_button(),
+    ]);
   }
 
   public function render_field($field, $key)
   {
-    $value = get_option($key, $field['value']);
-
-    switch ($field['type']) {
-      case 'text':
-        echo "<input type='text' id='{$key}' name='{$key}' value='{$value}' class='regular-text'>";
-
-        break;
-      case 'select':
-        echo "<select id='{$key}' name='{$key}'>";
-        foreach ($field['options'] as $option) {
-          $selected = ($value === $option) ? 'selected' : '';
-          echo "<option value='{$option}' {$selected}>{$option}</option>";
-        }
-        echo "</select>";
-
-        break;
-      case 'textarea':
-        echo "<textarea id='{$key}' name='{$key}' rows='5' cols='50' class='large-text'>" . esc_textarea($value) . "</textarea>";
-
-        break;
-      default:
-        echo "No input type specified";
+    try {
+      $value = get_option($key, $field['value']);
+      echo $this->twig->render('field.twig', [
+        'field' => $field,
+        'value' => $value,
+        'key' => $key,
+      ]);
+    } catch (\Exception $e) {
+      echo $e->getMessage();
     }
   }
 
