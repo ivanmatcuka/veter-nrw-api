@@ -23,6 +23,7 @@ defined('ABSPATH') or die();
 
 require(__DIR__ . '/vendor/autoload.php');
 
+const PLUGIN_SETTINGS = 'veter-plugin-settings';
 
 class VeterNRWPlugin
 {
@@ -117,19 +118,17 @@ class VeterNRWPlugin
   {
     $this->twig = new Environment(new FilesystemLoader(__DIR__ . '/templates'), [
       'cache' => false,
-      'strict_variables' => true,
     ]);
     $this->twig->addExtension(new SwitchTwigExtension());
   }
 
-  // Add our WP admin hooks.
   public function load()
   {
+    add_action('rest_api_init', [$this, 'register_api_routes']);
     add_action('admin_menu', [$this, 'add_plugin_options_page']);
     add_action('admin_init', [$this, 'add_plugin_settings']);
   }
 
-  // Add our plugin's option page to the WP admin menu.
   public function add_plugin_options_page()
   {
     add_options_page(
@@ -137,19 +136,22 @@ class VeterNRWPlugin
       'Veter NRW Plugin Settings',
       'manage_options',
       'veter',
-      function () {
-        $this->render_admin_page();
-      }
+      [$this, 'render_admin_page'],
     );
   }
 
-  // Render our plugin's option page.
   public function render_admin_page()
   {
-    return $this->twig->render('settings_form.twig', [
-      'fields' => settings_fields("veter-plugin-settings"),
-      'sections' => do_settings_sections('veter-plugin-settings'),
-      'submit_button' => submit_button(),
+    // TODO: refactor
+    ob_start();
+    settings_fields(PLUGIN_SETTINGS);
+    do_settings_sections(PLUGIN_SETTINGS);
+    submit_button();
+    $output = ob_get_contents();
+    ob_end_clean();
+
+    echo $this->twig->render('settings.twig', [
+      'output' => $output,
     ]);
   }
 
@@ -177,7 +179,7 @@ class VeterNRWPlugin
       $key,
       $field['label'],
       $renderer,
-      'veter-plugin-settings',
+      PLUGIN_SETTINGS,
       $section,
     );
   }
@@ -185,16 +187,14 @@ class VeterNRWPlugin
   public function add_fields($fields, $section)
   {
     foreach ($fields as $key => $field) {
-      register_setting('veter-plugin-settings', $key);
+      register_setting(PLUGIN_SETTINGS, $key);
       $this->add_field($field, $key, $section);
     }
   }
 
 
-  // Initialize our plugin's settings.
   public function add_plugin_settings()
   {
-    // Register a new setting for each field
     foreach (self::FIELDS as $section => $fields) {
       add_settings_section(
         $section,
@@ -202,16 +202,35 @@ class VeterNRWPlugin
         function () use ($section) {
           echo "<p>Settings for {$section}</p>";
         },
-        'veter-plugin-settings'
+        PLUGIN_SETTINGS
       );
 
       $this->add_fields($fields, $section);
     }
   }
+
+  public function register_api_routes()
+  {
+    register_rest_route('veter-nrw-plugin/v1', '/settings', [
+      'methods' => 'GET',
+      'callback' => [$this, 'get_settings'],
+      'permission_callback' => '__return_true'
+    ]);
+  }
+
+  public function get_settings()
+  {
+    $settings = [];
+
+    foreach (self::FIELDS as $_ => $fields) {
+      foreach ($fields as $key => $field) {
+        $settings[$key] = get_option($key, $field['value']);
+      }
+    }
+
+    return rest_ensure_response($settings);
+  }
 }
 
-// Load our plugin within the WP admin dashboard.
-if (is_admin()) {
-  $plugin = new VeterNRWPlugin();
-  $plugin->load();
-}
+$plugin = new VeterNRWPlugin();
+$plugin->load();

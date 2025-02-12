@@ -1,12 +1,17 @@
 {
-    "require": {
-        "johnpbloch/wordpress": "^6.7",
-        "twig/twig": "^3.0",
-        "buzzingpixel/twig-switch": "^1.0"
-    },
-    "config": {
-        "allow-plugins": {
-            "johnpbloch/wordpress-core-installer": true
-        }
+  "require": {
+    "johnpbloch/wordpress": "^6.7",
+    "twig/twig": "^3.0",
+    "buzzingpixel/twig-switch": "^1.0"
+  },
+  "config": {
+    "allow-plugins": {
+      "johnpbloch/wordpress-core-installer": true
     }
+  },
+  "autoload": {
+    "exclude-from-classmap": [
+      "johnpbloch/wordpress"
+    ]
+  }
 }
